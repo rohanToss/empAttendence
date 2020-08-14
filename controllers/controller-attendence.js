@@ -32,7 +32,7 @@ const moment = require('moment');
  }
 
 
- function checkIn(req,res,next){
+ async function checkIn(req,res,next){
 
  	
  	// check whether the location is provided or not 
@@ -100,19 +100,41 @@ const moment = require('moment');
 		newAttendence.lateIn = false;
 	}
 
-	// save the attendence object into the database
-	newAttendence.save((err,data)=>{
-		if(err){
-			console.log('attendence not saved in the database');
-			res.send('error');
+	// check whether the user have checkedIn or not
+	let today1 = moment().startOf('day');
+	let isCheckedin = await Attendence.findOne({
+		empId:req.body.empId,
+		entryDate:{
+			$gte : today1.toDate(),
+			$lte : moment(today1).endOf('day').toDate()
 		}
-		else{
-			res.status(200).json({
-				'error':false,
-				'data':data
-			});
-		}
-	});
+	})
+
+	if(isCheckedin){
+		return res.json({
+			'error':true,
+			'message':'employee has already checked in'
+		})
+	}
+	else{
+
+		// save the attendence object into the database
+		newAttendence.save((err,data)=>{
+			if(err){
+				console.log('attendence not saved in the database');
+				res.send('error');
+			}
+			else{
+				res.status(200).json({
+					'error':false,
+					'data':data
+				});
+			}
+		});
+
+	}
+
+
 
  	}else{
  		res.json({
@@ -121,6 +143,15 @@ const moment = require('moment');
  		})
  	}
  }
+
+
+
+
+
+
+
+
+
 
 //get the attendence details for the current day
 function attendenceDetails(req,res,next){
@@ -188,13 +219,9 @@ async function checkOut(req,res,next){
 				'message':'check out time not provided'
 			})
 
-		}else if(!req.body.EarlyOutReason){
-			return res.json({
-				'error':true,
-				'message':'early check out not provided'
-			})
-
 		}
+
+
 
 		let today1 = moment().startOf('day');
 
@@ -217,21 +244,42 @@ async function checkOut(req,res,next){
 			let currentTime = (todayTime[4]).split(':');
 			
 			// time = 6pm
-			console.log(currentTime[0]);
-
 			if(currentTime[0] <= 17){
 				update.earlyOut=true;
+				// check if the early checkout reason is given
+				if(!req.body.EarlyOutReason){
+					return res.json({
+						'error':true,
+						'message':'early check out not provided'
+					})
+				}
 			}else{
 				update.EarlyOutReason = 'not early';
 				update.earlyOut=false;
 			}
 
-			let doc = await Attendence.findOneAndUpdate(filter,update,{new:true});
-			res.json({
-				'error':false,
-				'data': doc
-			});
 
+			let isCheckedOut = await Attendence.findOne({
+				empId:req.body.empId,
+				entryDate:{
+					$gte : today1.toDate(),
+					$lte : moment(today1).endOf('day').toDate()
+				}
+			})
+
+			if(isCheckedOut){
+				return res.json({
+					'error':true,
+					'message':'employee has already checked out'
+				})
+			}
+			else{
+				let doc = await Attendence.findOneAndUpdate(filter,update,{new:true});
+				res.json({
+					'error':false,
+					'data': doc
+				});				
+			}
 	}
 	catch(err){
 		console.log(err);
