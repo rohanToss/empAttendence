@@ -15,7 +15,7 @@ const AttendenceSchema = mongoose.Schema({
 	},
 	lateInReason:{
 		type:String,
-		default:'employee is late'
+		default:''
 	},
 	EarlyOutReason:{
 		type:String

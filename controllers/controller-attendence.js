@@ -22,7 +22,7 @@ const moment = require('moment');
 	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
 	const d = R * c; // in metres
-	console.log(`distance in meters ${d} meters.`);
+	// console.log(`distance in meters ${d} meters.`);
 
 	if(d>5000)
 		return false;
@@ -34,10 +34,39 @@ const moment = require('moment');
 
  function checkIn(req,res,next){
 
+ 	
+ 	// check whether the location is provided or not 
+ 	if(!req.body.lat && !req.body.lon)
+ 		return res.json({
+ 			'error':true,
+ 			'message':'co-ordinates not provided'
+ 		})
+
+
+
  	// check whether the employee is within 500m meters
  	let isPermitted = locationMeasure(req.body.lat,req.body.lon);
 
  	if(isPermitted){
+
+ 		// check if employee id is provided or not
+ 		if(!req.body.empId){
+ 			return res.json({
+ 				'error':'true',
+ 				'message':'empId not provided'
+ 			})
+ 		}
+
+
+ 		//check whether check-in time is provided or not
+ 		if(!req.body.inTime){
+ 			return res.json({
+ 				'error':'true',
+ 				'message':'check in time not provided'
+ 			})
+ 		}
+
+
 
  		//create a new employee attendence object
  		const newAttendence = new Attendence({
@@ -58,6 +87,14 @@ const moment = require('moment');
 	// time = 10 am
 	if(currentTime[0] >= 10){
 		newAttendence.lateIn = true;
+
+		// check if late entry reason is provided or not
+		if(newAttendence.lateInReason==''){
+			return res.json({
+				'error':true,
+				'message':'late entry reason not provided'
+			})
+		}
 	}else{
 		newAttendence.lateInReason = 'not late';
 		newAttendence.lateIn = false;
@@ -67,10 +104,13 @@ const moment = require('moment');
 	newAttendence.save((err,data)=>{
 		if(err){
 			console.log('attendence not saved in the database');
-			res.send(err);
+			res.send('error');
 		}
 		else{
-			res.send(data);
+			res.status(200).json({
+				'error':false,
+				'data':data
+			});
 		}
 	});
 
@@ -135,6 +175,27 @@ async function monthlyAttendence(req,res,next){
 async function checkOut(req,res,next){
 	try{
 
+		if(!req.body.empId){
+			return res.json({
+				'error':true,
+				'message':'empId not provided'
+			})
+		}
+		else if(!req.body.outTime)
+		{
+			return res.json({
+				'error':true,
+				'message':'check out time not provided'
+			})
+
+		}else if(!req.body.EarlyOutReason){
+			return res.json({
+				'error':true,
+				'message':'early check out not provided'
+			})
+
+		}
+
 		let today1 = moment().startOf('day');
 
 			const filter = {
@@ -166,7 +227,10 @@ async function checkOut(req,res,next){
 			}
 
 			let doc = await Attendence.findOneAndUpdate(filter,update,{new:true});
-			res.send(doc);
+			res.json({
+				'error':false,
+				'data': doc
+			});
 
 	}
 	catch(err){
