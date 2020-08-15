@@ -33,110 +33,115 @@ const moment = require('moment');
 
 
  async function checkIn(req,res,next){
+ 	try{
 
- 	//check whether the empId is a new user or not
+ 		//check whether the empId is a new user or not
+		// add code
 
- 	//***add code***//
+		 // check whether the location is provided or not 
+	 	if(!req.body.lat && !req.body.lon){
+	 		return res.json({
+	 			'error':true,
+	 			'message':'co-ordinates not provided'
+	 		})
 
- 	// check whether the location is provided or not 
- 	if(!req.body.lat && !req.body.lon)
- 		return res.json({
- 			'error':true,
- 			'message':'co-ordinates not provided'
- 		})
-
- 	// check whether the employee is within 500m meters
- 	let isPermitted = locationMeasure(req.body.lat,req.body.lon);
-
- 	if(isPermitted){
-
- 		// check if employee id is provided or not
- 		if(!req.body.empId){
- 			return res.json({
- 				'error':'true',
- 				'message':'empId not provided'
- 			})
- 		}
+	 	}
+	 		
+	 	// check whether the employee is within 500m meters
+	 	let isPermitted = locationMeasure(req.body.lat,req.body.lon);
+	 	if(isPermitted){
+	 	 	// check if employee id is provided or not
+		 	if(!req.body.empId){
+		 		return res.json({
+		 			'error':'true',
+		 			'message':'empId not provided'
+		 		})
+		 	}
 
 
- 		//check whether check-in time is provided or not
- 		if(!req.body.inTime){
- 			return res.json({
- 				'error':'true',
- 				'message':'check in time not provided'
- 			})
- 		}
+		 	//check whether check-in time is provided or not
+		 	if(!req.body.inTime){
+		 		return res.json({
+		 			'error':'true',
+		 			'message':'check in time not provided'
+		 		})
+		 	}
 
- 		//create a new employee attendence object
- 		const newAttendence = new Attendence({
-		empId:req.body.empId,
-		inTime :req.body.inTime,
-		outTime:req.body.outTime,
-		lateInReason:req.body.lateInReason,
-		lateInReason:req.body.lateInReason,
-		earlyOutReason:'',
-		lateIn:false,
-		earlyOut:false
-	});
+		 	//create a new employee attendence object
+	 		const newAttendence = new Attendence({
+				empId:req.body.empId,
+				inTime :req.body.inTime,
+				outTime:req.body.outTime,
+				lateInReason:req.body.lateInReason,
+				lateInReason:req.body.lateInReason,
+				earlyOutReason:'',
+				lateIn:false,
+				earlyOut:false
+			});
 
- 	let today = newAttendence.inTime.toString();
-	let todayTime = (today.split(' '));
-	let currentTime = (todayTime[4]).split(':');
-	
-	// time = 10 am
-	if(currentTime[0] >= 10){
-		newAttendence.lateIn = true;
-
-		// check if late entry reason is provided or not
-		if(newAttendence.lateInReason==''){
-			return res.json({
-				'error':true,
-				'message':'late entry reason not provided'
-			})
-		}
-	}else{
-		newAttendence.lateInReason = 'not late';
-		newAttendence.lateIn = false;
-	}
-
-	// check whether the user have checkedIn or not
-	let today1 = moment().startOf('day');
-	let isCheckedin = await Attendence.findOne({
-		empId:req.body.empId,
-		entryDate:{
-			$gte : today1.toDate(),
-			$lte : moment(today1).endOf('day').toDate()
-		}
-	})
-
-	if(isCheckedin){
-		return res.json({
-			'error':true,
-			'message':'employee has already checked in'
-		})
-	}
-	else{
-
-		// save the attendence object into the database
-		newAttendence.save((err,data)=>{
-			if(err){
-				console.log('attendence not saved in the database');
-				res.send('error');
+		 	let today = newAttendence.inTime.toString();
+			let todayTime = (today.split(' '));
+			let currentTime = (todayTime[4]).split(':');
+			
+			// time = 10 am
+			if(currentTime[0] >= 10){
+				newAttendence.lateIn = true;
+				// check if late entry reason is provided or not
+				if(newAttendence.lateInReason==''){
+					return res.json({
+						'error':true,
+						'message':'late entry reason not provided'
+					})
+				}
+			}else{
+				newAttendence.lateInReason = 'not late';
+				newAttendence.lateIn = false;
 			}
-			else{
-				res.status(200).json({
-					'error':false,
-					'data':data
+
+			// check whether the user have checkedIn or not
+			let today1 = moment().startOf('day');
+			let isCheckedin = await Attendence.findOne({
+				empId:req.body.empId,
+				entryDate:{
+					$gte : today1.toDate(),
+					$lte : moment(today1).endOf('day').toDate()
+				}
+			})
+
+			if(isCheckedin){
+				return res.json({
+					'error':true,
+					'message':'employee has already checked in'
+				})
+			}else{
+				// save the attendence object into the database
+				newAttendence.save((err,data)=>{
+					if(err){
+						console.log('attendence not saved in the database');
+						res.send('error');
+					}
+					else{
+						res.status(200).json({
+							'error':false,
+							'data':data
+						});
+					}
 				});
 			}
-		});
 
-	}
-
- 	}else{
+		}// end of is Permitted
+		else{
+ 			res.json({
+ 				'error':true,
+ 				'message':'user is not within the permitted limited of 500m range from the office location'
+ 			})
+ 		}
+ 	}
+ 	catch(err){
+ 		console.log(err);
  		res.json({
  			'error':true,
- 			'message':'user is not within the permitted limited of 500m range from the office location'
+ 			'message':'check in not done'
  		})
  	}
  }
