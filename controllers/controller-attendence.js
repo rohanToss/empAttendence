@@ -34,6 +34,10 @@ const moment = require('moment');
 
  async function checkIn(req,res,next){
 
+ 	//check whether the empId is a new user or not
+
+ 	//***add code***//
+
  	// check whether the location is provided or not 
  	if(!req.body.lat && !req.body.lon)
  		return res.json({
