@@ -34,15 +34,12 @@ const moment = require('moment');
 
  async function checkIn(req,res,next){
 
- 	
  	// check whether the location is provided or not 
  	if(!req.body.lat && !req.body.lon)
  		return res.json({
  			'error':true,
  			'message':'co-ordinates not provided'
  		})
-
-
 
  	// check whether the employee is within 500m meters
  	let isPermitted = locationMeasure(req.body.lat,req.body.lon);
@@ -66,8 +63,6 @@ const moment = require('moment');
  			})
  		}
 
-
-
  		//create a new employee attendence object
  		const newAttendence = new Attendence({
 		empId:req.body.empId,
@@ -75,7 +70,7 @@ const moment = require('moment');
 		outTime:req.body.outTime,
 		lateInReason:req.body.lateInReason,
 		lateInReason:req.body.lateInReason,
-		EarlyOutReason:'',
+		earlyOutReason:'',
 		lateIn:false,
 		earlyOut:false
 	});
@@ -134,8 +129,6 @@ const moment = require('moment');
 
 	}
 
-
-
  	}else{
  		res.json({
  			'error':true,
@@ -143,13 +136,6 @@ const moment = require('moment');
  		})
  	}
  }
-
-
-
-
-
-
-
 
 
 
@@ -236,7 +222,7 @@ async function checkOut(req,res,next){
 
 			const update = {
 				outTime:req.body.outTime,
-				EarlyOutReason:req.body.EarlyOutReason,
+				earlyOutReason:req.body.earlyOutReason,
 			}
 
 			let today = update.outTime.toString();
@@ -247,14 +233,14 @@ async function checkOut(req,res,next){
 			if(currentTime[0] <= 17){
 				update.earlyOut=true;
 				// check if the early checkout reason is given
-				if(!req.body.EarlyOutReason){
+				if(!req.body.earlyOutReason){
 					return res.json({
 						'error':true,
 						'message':'early check out not provided'
 					})
 				}
 			}else{
-				update.EarlyOutReason = 'not early';
+				update.earlyOutReason = 'not early';
 				update.earlyOut=false;
 			}
 
@@ -267,7 +253,7 @@ async function checkOut(req,res,next){
 				}
 			})
 
-			if(isCheckedOut){
+			if(isCheckedOut.outTime){
 				return res.json({
 					'error':true,
 					'message':'employee has already checked out'

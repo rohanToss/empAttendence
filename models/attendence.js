@@ -11,13 +11,12 @@ const AttendenceSchema = mongoose.Schema({
 	},
 	outTime:{
 		type:Date,
-		default:Date.now
 	},
 	lateInReason:{
 		type:String,
 		default:''
 	},
-	EarlyOutReason:{
+	earlyOutReason:{
 		type:String
 	},
 	lateIn:{
