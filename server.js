@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 5000;
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 
-app.use('/',require('./routes/route-attendence'));
-
+app.use('/attendence',require('./routes/route-attendence'));
+app.use('/location',require('./routes/route-location'));
 
 mongoose.connect(process.env.URL,{useNewUrlParser:true,useUnifiedTopology:true})
 .then(()=>{
